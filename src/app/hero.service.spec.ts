@@ -1,6 +1,12 @@
-import { HttpClientTestingModule, HttpTestingController } from "@angular/common/http/testing";
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from "@angular/common/http/testing";
+import { of } from "rxjs/observable/of";
+import { TestBed } from "@angular/core/testing";
+import { HttpHeaders } from "@angular/common/http";
+
 import { MessageService } from "./message.service";
-import { TestBed, inject } from "@angular/core/testing";
 import { HeroService } from "./hero.service";
 import { Hero } from "./hero";
 
@@ -43,7 +49,8 @@ describe('HeroService', () => {
 
   describe('getHeroes', () => {
 
-    it('should call get with the default URl', () => {
+    it('should call get with the default URL', () => {
+
       sut.getHeroes().subscribe();
 
       httpTestingController.expectOne(baseURL);
@@ -97,13 +104,13 @@ describe('HeroService', () => {
 
       });
 
-      it('should call log once', () => {
+      it('should call handleError once', () => {
 
         expect(handleErrorSpy).toHaveBeenCalledTimes(1);
 
       });
 
-      it('should call log with correct parameters', () => {
+      it('should call handleError with correct parameters', () => {
 
         expect(handleErrorSpy).toHaveBeenCalledWith('getHeroes', []);
 
@@ -119,7 +126,7 @@ describe('HeroService', () => {
 
     beforeEach(() => expectedUrl = `${baseURL}/?id=${heroID}`);
 
-    it('should call get with the correct URl', () => {
+    it('should call get with the default URL', () => {
 
       sut.getHeroNo404(heroID).subscribe();
 
@@ -213,7 +220,7 @@ describe('HeroService', () => {
 
   describe('getHero', () => {
 
-    it('should call get with the correct URl', () => {
+    it('should call get with correctly constructed URL', () => {
 
       sut.getHero(heroID).subscribe();
 
@@ -263,7 +270,7 @@ describe('HeroService', () => {
       beforeEach(() => {
 
         handleErrorSpy = spyOn((sut as any), 'handleError');
-        sut.getHero(1).subscribe();
+        sut.getHero(heroID).subscribe();
 
         req = httpTestingController.expectOne(baseURL + '/' + heroID);
         data = [];
@@ -272,13 +279,13 @@ describe('HeroService', () => {
 
       });
 
-      it('should call log once', () => {
+      it('should call handleError once', () => {
 
         expect(handleErrorSpy).toHaveBeenCalledTimes(1);
 
       });
 
-      it('should call log with correct parameters', () => {
+      it('should call handleError with correct parameters', () => {
 
         expect(handleErrorSpy).toHaveBeenCalledWith('getHero id=' + heroID);
 
@@ -290,15 +297,47 @@ describe('HeroService', () => {
 
   describe('searchHeroes', () => {
 
-    it('should call get with the correct URl', () => {
+    let heroName: string;
+    let actualResult;
 
-      sut.getHero(heroID).subscribe();
+    beforeEach(() => {
 
-      req = httpTestingController.expectOne(baseURL + '/' + heroID);
+      heroName = data[0].name;
 
+      sut.searchHeroes(heroName).subscribe();
+
+      req = httpTestingController.expectOne(`${baseURL}/?name=${heroName}`);
+
+    });
+
+    it('should return Observable of empty array if term is false-like', () => {
+
+      actualResult = sut.searchHeroes(' ');
+      req.flush([data[1]]);
+
+      expect(actualResult).toEqual(of([]));
+
+    });
+
+    it('should call http.get with correctly constructed URL', () => {
+      const heroName: string = data[0].name;
       req.flush(data);
 
-      httpTestingController.verify();
+      actualResult = sut.searchHeroes(heroName).subscribe();
+
+      httpTestingController.expectOne(`${baseURL}/?name=${heroName}`);
+
+    });
+
+    it('searchHeroes shouldn`t returns observble of empty array if it is called with true-like parameter ', () => {
+      const heroName: string = data[0].name;
+      req.flush(data);
+
+      actualResult = sut.searchHeroes(heroName).subscribe();
+
+      httpTestingController.expectOne(`${baseURL}/?name=${heroName}`);
+
+      expect(actualResult).not.toEqual(of([]));
 
     });
 
@@ -310,12 +349,11 @@ describe('HeroService', () => {
 
         logSpy = spyOn((sut as any), 'log');
 
-        sut.getHeroes().subscribe();
 
-        req = httpTestingController.expectOne(baseURL);
-        data = [];
+        heroName = data[0].name;
 
-        req.flush(data);
+        actualResult = sut.searchHeroes(heroName);
+        req.flush([data[1]]);
 
       });
 
@@ -325,9 +363,11 @@ describe('HeroService', () => {
 
       });
 
-      it('should call log with correct parameters', () => {
+      it('should call log with correct parameter', () => {
 
-        expect(logSpy).toHaveBeenCalledWith('fetched heroes');
+        const expectedLogMessage: string = `found heroes matching "${heroName}"`;
+
+        expect(logSpy).toHaveBeenCalledWith(expectedLogMessage);
 
       });
 
@@ -340,24 +380,264 @@ describe('HeroService', () => {
       beforeEach(() => {
 
         handleErrorSpy = spyOn((sut as any), 'handleError');
-        sut.getHero(1).subscribe();
 
-        req = httpTestingController.expectOne(baseURL + '/' + heroID);
-        data = [];
 
-        req.flush(data);
+        heroName = data[0].name;
+
+        actualResult = sut.searchHeroes(heroName);
+        req.flush([]);
 
       });
 
-      it('should call log once', () => {
+      it('should call handleError once', () => {
 
         expect(handleErrorSpy).toHaveBeenCalledTimes(1);
 
       });
 
-      it('should call log with correct parameters', () => {
+      it('should call handleError with correct parameters', () => {
 
-        expect(handleErrorSpy).toHaveBeenCalledWith('getHero id=' + heroID);
+        const expectedResult: Array<any> = ['searchHeroes', []];
+
+        expect(handleErrorSpy).toHaveBeenCalledWith(...expectedResult);
+
+      });
+
+    });
+
+  });
+
+  describe('addHero', () => {
+
+    let hero: Hero;
+    let actualResult;
+    let httpOptions;
+
+    beforeEach(() => {
+
+      httpOptions = {
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      };
+
+      hero = data[0];
+
+      sut.addHero(hero).subscribe();
+
+      req = httpTestingController.expectOne(baseURL);
+
+    });
+
+    describe('when there is a successful response', () => {
+
+      let logSpy;
+
+      beforeEach(() => {
+
+        logSpy = spyOn((sut as any), 'log');
+
+        actualResult = sut.addHero(hero);
+        req.flush(data[0]);
+
+      });
+
+      it('should call log once', () => {
+
+        expect(logSpy).toHaveBeenCalledTimes(1);
+
+      });
+
+      it('should call log with correct value', () => {
+
+        const expectedLogMessage: string = `added hero w/ id=${hero.id}`;
+
+        expect(logSpy).toHaveBeenCalledWith(expectedLogMessage);
+
+      });
+
+    });
+
+    describe('when there isn`t a successful response', () => {
+
+      let handleErrorSpy;
+
+      beforeEach(() => {
+
+        handleErrorSpy = spyOn((sut as any), 'handleError');
+
+        actualResult = sut.addHero(hero);
+        req.flush(data[0]);
+
+      });
+
+      it('should call handleError once', () => {
+
+        expect(handleErrorSpy).toHaveBeenCalledTimes(1);
+
+      });
+
+      it('should call handleError with correct value', () => {
+
+        const expectedResult: string = 'addHero';
+
+        expect(handleErrorSpy).toHaveBeenCalledWith(expectedResult);
+
+      });
+
+    });
+
+  });
+
+  describe('deleteHero', () => {
+
+    let hero: Hero;
+    let actualResult;
+
+    beforeEach(() => {
+
+      hero = data[0];
+
+      sut.deleteHero(hero.id).subscribe();
+
+      req = httpTestingController.expectOne(`${baseURL}/${hero.id}`);
+
+    });
+
+    it('hero object, ID should be number( hero`s id )', () => {
+
+      sut.deleteHero(hero).subscribe();
+
+      req = httpTestingController.expectOne(`${baseURL}/${hero.id}`);
+
+    });
+
+    describe('when there is a successful response', () => {
+
+      let logSpy;
+
+      beforeEach(() => {
+
+        logSpy = spyOn((sut as any), 'log');
+
+        actualResult = sut.deleteHero(hero);
+        req.flush(data[0]);
+
+      });
+
+      it('should call log once', () => {
+
+        expect(logSpy).toHaveBeenCalledTimes(1);
+
+      });
+
+      it('should call log with correct value', () => {
+
+        const expectedLogMessage: string = `deleted hero id=${hero.id}`;
+
+        expect(logSpy).toHaveBeenCalledWith(expectedLogMessage);
+
+      });
+
+    });
+
+    describe('when there isn`t a successful response', () => {
+
+      let handleErrorSpy;
+
+      beforeEach(() => {
+
+        handleErrorSpy = spyOn((sut as any), 'handleError');
+
+        actualResult = sut.deleteHero(hero);
+        req.flush(data[0]);
+
+      });
+
+      it('should call handleError once', () => {
+
+        expect(handleErrorSpy).toHaveBeenCalledTimes(1);
+
+      });
+
+      it('should call handleError with correct value', () => {
+
+        const expectedResult: string = 'deleteHero';
+
+        expect(handleErrorSpy).toHaveBeenCalledWith(expectedResult);
+
+      });
+
+    });
+
+  });
+
+  describe('updateHero', () => {
+
+    let hero: Hero;
+    let actualResult;
+
+    beforeEach(() => {
+
+      hero = data[0];
+
+      sut.updateHero(hero).subscribe();
+
+      req = httpTestingController.expectOne(baseURL);
+
+    });
+
+    describe('when there is a successful response', () => {
+
+      let logSpy;
+
+      beforeEach(() => {
+
+        logSpy = spyOn((sut as any), 'log');
+
+        actualResult = sut.updateHero(hero);
+        req.flush(data[0]);
+
+      });
+
+      it('should call log once', () => {
+
+        expect(logSpy).toHaveBeenCalledTimes(1);
+
+      });
+
+      it('should call log with correct value', () => {
+
+        const expectedLogMessage: string = `updated hero id=${hero.id}`;
+
+        expect(logSpy).toHaveBeenCalledWith(expectedLogMessage);
+
+      });
+
+    });
+
+    describe('when there isn`t a successful response', () => {
+
+      let handleErrorSpy;
+
+      beforeEach(() => {
+
+        handleErrorSpy = spyOn((sut as any), 'handleError');
+
+        actualResult = sut.updateHero(hero);
+        req.flush(data[0]);
+
+      });
+
+      it('should call handleError once', () => {
+
+        expect(handleErrorSpy).toHaveBeenCalledTimes(1);
+
+      });
+
+      it('should call handleError with correct value', () => {
+
+        const expectedResult: string = 'updateHero';
+
+        expect(handleErrorSpy).toHaveBeenCalledWith(expectedResult);
 
       });
 
