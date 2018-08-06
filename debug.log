@@ -1,0 +1,8 @@
+[0731/132306.512:ERROR:file_io_win.cc(170)] CreateFile C:\Users\MATANA~1\AppData\Local\Temp\karma-29626721\Crashpad\reports\fe1db4ee-5755-4bc1-96fc-32d079ea460f.dmp: The system cannot find the path specified. (0x3)
+[0731/132306.512:ERROR:crash_report_exception_handler.cc(97)] PrepareNewCrashReport failed
+[0731/132631.638:ERROR:file_io_win.cc(170)] CreateFile C:\Users\MATANA~1\AppData\Local\Temp\karma-29626721\Crashpad\reports\72f95b38-a034-46fe-b957-f69ff02e0aca.dmp: The system cannot find the path specified. (0x3)
+[0731/132631.638:ERROR:crash_report_exception_handler.cc(97)] PrepareNewCrashReport failed
+[0731/132650.666:ERROR:file_io_win.cc(170)] CreateFile C:\Users\MATANA~1\AppData\Local\Temp\karma-29626721\Crashpad\reports\31ed59d2-78ad-4961-8f49-fee801442ecb.dmp: The system cannot find the path specified. (0x3)
+[0731/132650.669:ERROR:crash_report_exception_handler.cc(97)] PrepareNewCrashReport failed
+[0731/132707.101:ERROR:file_io_win.cc(170)] CreateFile C:\Users\MATANA~1\AppData\Local\Temp\karma-29626721\Crashpad\reports\7a5b967f-0361-4934-8eae-6e95dbed2a1e.dmp: The system cannot find the path specified. (0x3)
+[0731/132707.101:ERROR:crash_report_exception_handler.cc(97)] PrepareNewCrashReport failed
