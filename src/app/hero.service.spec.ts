@@ -10,6 +10,8 @@ import { MessageService } from "./message.service";
 import { HeroService } from "./hero.service";
 import { Hero } from "./hero";
 
+import * as Rx from "rxjs";
+
 describe('HeroService', () => {
 
   let httpTestingController: HttpTestingController;
@@ -47,6 +49,9 @@ describe('HeroService', () => {
 
   });
 
+  // REVIEW: the test coverage is too shallow...
+  // what about the inner workings of log and handleError?
+  // what about the return type (Observable) of the functions
   describe('getHeroes', () => {
 
     it('should call get with the default URL', () => {
@@ -63,10 +68,12 @@ describe('HeroService', () => {
 
       beforeEach(() => {
 
+        // REVIEW: too much stuff in the beforeEach
         logSpy = spyOn((sut as any), 'log');
 
         sut.getHeroes().subscribe();
 
+        // REVIEW: never expect in the before/beforeEach
         req = httpTestingController.expectOne(baseURL);
         data = [];
 
@@ -95,6 +102,8 @@ describe('HeroService', () => {
       beforeEach(() => {
 
         handleErrorSpy = spyOn((sut as any), 'handleError');
+
+        // REVIEW: Same as above
         sut.getHeroes().subscribe();
 
         req = httpTestingController.expectOne(baseURL);
@@ -120,12 +129,14 @@ describe('HeroService', () => {
 
   });
 
+  // REVIEW: Too heavy on the suite structure -> decreased readability and story-telling
   describe('getHeroNo404', () => {
 
     let expectedUrl: string;
 
     beforeEach(() => expectedUrl = `${baseURL}/?id=${heroID}`);
 
+    // REVIEW: "wtf is default url?"
     it('should call get with the default URL', () => {
 
       sut.getHeroNo404(heroID).subscribe();
@@ -140,8 +151,10 @@ describe('HeroService', () => {
 
       beforeEach(() => {
 
+        // REVIEW: side effect of heavy structure -> duplicated action
         expectedUrl = `${baseURL}/?id=${heroID}`;
 
+        // REVIEW: Again too heavy beforeEach
         logSpy = spyOn((sut as any), 'log');
 
         sut.getHeroNo404(heroID).subscribe();
@@ -150,8 +163,10 @@ describe('HeroService', () => {
 
       });
 
+      // REVIEW: install a spell check extension
       describe('when there is recieved data', () => {
 
+        // REVIEW: side effect of too heavy structure -> where TF is data? It is 4 describes out
         beforeEach(() => req.flush(data));
 
         it('should call log once', () => {
@@ -186,12 +201,13 @@ describe('HeroService', () => {
 
     });
 
+    // REVIEW: Incorrect Suite -> copy-paste driven development
     describe('when there isn`t a successful response', () => {
 
       let handleErrorSpy;
 
       beforeEach(() => {
-
+        // REVIEW: same as before
         handleErrorSpy = spyOn((sut as any), 'handleError');
         sut.getHeroes().subscribe();
 
@@ -220,6 +236,7 @@ describe('HeroService', () => {
 
   describe('getHero', () => {
 
+    // REVIEW: dafaq is a "correctly constructed URL"
     it('should call get with correctly constructed URL', () => {
 
       sut.getHero(heroID).subscribe();
@@ -232,14 +249,17 @@ describe('HeroService', () => {
 
     });
 
+    // REVIEW: Incorrect suite -> copy-paste driven development
     describe('when there is a successful response', () => {
 
       let logSpy;
 
       beforeEach(() => {
 
+        // REVIEW: same as before
         logSpy = spyOn((sut as any), 'log');
 
+        // REVIEW: WTF? getHeroes?
         sut.getHeroes().subscribe();
 
         req = httpTestingController.expectOne(baseURL);
@@ -255,6 +275,7 @@ describe('HeroService', () => {
 
       });
 
+      // REVIEW: dafaq is "correct parameters"
       it('should call log with correct parameters', () => {
 
         expect(logSpy).toHaveBeenCalledWith('fetched heroes');
@@ -269,10 +290,15 @@ describe('HeroService', () => {
 
       beforeEach(() => {
 
+        // REVIEW: same as before
         handleErrorSpy = spyOn((sut as any), 'handleError');
+
+        // REVIEW: here we have getHero... consistency level over 9000
         sut.getHero(heroID).subscribe();
 
         req = httpTestingController.expectOne(baseURL + '/' + heroID);
+
+        // REVIEW: Incorrect response type
         data = [];
 
         req.flush(data);
@@ -304,6 +330,7 @@ describe('HeroService', () => {
 
       heroName = data[0].name;
 
+      // REVIEW: just no
       sut.searchHeroes(heroName).subscribe();
 
       req = httpTestingController.expectOne(`${baseURL}/?name=${heroName}`);
@@ -313,12 +340,14 @@ describe('HeroService', () => {
     it('should return Observable of empty array if term is false-like', () => {
 
       actualResult = sut.searchHeroes(' ');
+
+      // REVIEW: flush? why flush?
       req.flush([data[1]]);
 
       expect(actualResult).toEqual(of([]));
-
     });
 
+    // REVIEW: what is "correctly"
     it('should call http.get with correctly constructed URL', () => {
       const heroName: string = data[0].name;
       req.flush(data);
@@ -329,10 +358,12 @@ describe('HeroService', () => {
 
     });
 
+    // REVIEW: Grammar, typos
     it('searchHeroes shouldn`t returns observble of empty array if it is called with true-like parameter ', () => {
       const heroName: string = data[0].name;
       req.flush(data);
 
+      // REVIEW: Incorrect test -> .subscribe(); returns a Subscription, so it will never equal of([])
       actualResult = sut.searchHeroes(heroName).subscribe();
 
       httpTestingController.expectOne(`${baseURL}/?name=${heroName}`);
@@ -381,7 +412,7 @@ describe('HeroService', () => {
 
         handleErrorSpy = spyOn((sut as any), 'handleError');
 
-
+        // REVIEW: same as before
         heroName = data[0].name;
 
         actualResult = sut.searchHeroes(heroName);
@@ -410,6 +441,7 @@ describe('HeroService', () => {
   describe('addHero', () => {
 
     let hero: Hero;
+    // REVIEW: unused variables
     let actualResult;
     let httpOptions;
 
@@ -421,6 +453,7 @@ describe('HeroService', () => {
 
       hero = data[0];
 
+      // REVIEW: Same as before
       sut.addHero(hero).subscribe();
 
       req = httpTestingController.expectOne(baseURL);
@@ -435,6 +468,7 @@ describe('HeroService', () => {
 
         logSpy = spyOn((sut as any), 'log');
 
+        // REVIEW: duplicated action
         actualResult = sut.addHero(hero);
         req.flush(data[0]);
 
@@ -490,12 +524,14 @@ describe('HeroService', () => {
   describe('deleteHero', () => {
 
     let hero: Hero;
+    // REVIEW: unused variable
     let actualResult;
 
     beforeEach(() => {
 
       hero = data[0];
 
+      // REVIEW: Same
       sut.deleteHero(hero.id).subscribe();
 
       req = httpTestingController.expectOne(`${baseURL}/${hero.id}`);
@@ -518,6 +554,7 @@ describe('HeroService', () => {
 
         logSpy = spyOn((sut as any), 'log');
 
+        // REVIEW: same
         actualResult = sut.deleteHero(hero);
         req.flush(data[0]);
 
@@ -573,6 +610,7 @@ describe('HeroService', () => {
   describe('updateHero', () => {
 
     let hero: Hero;
+    // REVIEW: unused variable
     let actualResult;
 
     beforeEach(() => {

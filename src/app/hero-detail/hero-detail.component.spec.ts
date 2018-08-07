@@ -38,6 +38,7 @@ describe('HeroDetailComponent', () => {
     heroServiceMock = jasmine.createSpyObj(['getHero', 'updateHero']);
     locationMock = jasmine.createSpyObj(['back']);
 
+    // REVIEW: why NO_ERRORS_SCHEMA
     TestBed.configureTestingModule({
       declarations: [
         HeroDetailComponent,
@@ -57,10 +58,19 @@ describe('HeroDetailComponent', () => {
     fixture = TestBed.createComponent(HeroDetailComponent);
     sut = fixture.componentInstance;
 
+    // REVIEW: bad idea to have it here, because there might be cases where you want to do stuff before the NG initiation
     fixture.detectChanges();
 
   });
 
+  // REVIEW: need better describe organization
+  // no way to easily see each method's tests
+  // no way to easily see the template tests
+
+  // REVIEW: shallow test coverage
+  // where are the sut.getHero tests 
+
+  // REVIEW: hidden expectation -> the title should notify that we expect an uppercase version of the name
   it('should render hero name in a h2 tag', () => {
 
     const actualResult: string = fixture.nativeElement.querySelector('h2').textContent;
@@ -69,6 +79,7 @@ describe('HeroDetailComponent', () => {
 
   });
 
+  // REVIEW: why fakeAsync?
   it('should call updateHero when save is called', fakeAsync(() => {
 
     heroServiceMock.updateHero.and.returnValue(of({}));
@@ -90,6 +101,7 @@ describe('HeroDetailComponent', () => {
 
   });
 
+  // REVIEW: Inconsistent title and implementation, hint -> copy-paste driven development
   it('when ngOnInit is called getHero should be called once', () => {
     const heroServiceSpy = (sut as any).heroService;
 
@@ -97,6 +109,7 @@ describe('HeroDetailComponent', () => {
 
   });
 
+  // REVIEW: inconsistent title and implementation
   it('when ngOnInit is called getHero should be called with parameter of type number', () => {
     const heroServiceSpy = (sut as any).heroService;
 
@@ -128,6 +141,7 @@ describe('HeroDetailComponent', () => {
 
   });
 
+  // REVIEW: duplicated case
   it('after ngOnInit, component`s template h2 tag should contains the hero`s uppercase name ', () => {
     const h2TextContent: string = fixture.nativeElement.querySelector('h2').textContent;
 
@@ -143,6 +157,7 @@ describe('HeroDetailComponent', () => {
   });
 
   // intgr. tests
+  // REVIEW: muuuhahahahah this is a good one, I seeeee 8 bugs, how many do you see here?
   it('after ngOnInit, component`s template input element should contains the hero`s name ', () => {
     const divTextContent: string = fixture.nativeElement.querySelector('input').value;
 

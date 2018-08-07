@@ -24,6 +24,7 @@ describe('HeroesComponent', () => {
 
   });
 
+  // REVIEW: Where are the delete tests defined at the bottom of the file?
   describe('delete', () => {
 
     beforeEach(() => {
@@ -95,6 +96,8 @@ describe('HeroesComponent', () => {
 
   describe('add', () => {
 
+    // REVIEW: when add is called....??? what should happen?
+    // REVIEW: missed case that the actual hero was added to the collection
     it('when add is called with empty string', () => {
 
       const heroName: string = '';
@@ -118,6 +121,7 @@ describe('HeroesComponent', () => {
 
     });
 
+    // REVIEW: What happened here?
     xit('when add is called with valid parameter heroService.addHero should be called once', () => {
 
       const hero: Hero = heroes[0];
@@ -127,8 +131,8 @@ describe('HeroesComponent', () => {
 
       sut.add(hero.name);
 
+      // REVIEW: why access this like that?
       expect((sut as any).heroService.addHero).toHaveBeenCalledWith({ name: hero.name, strength: hero.strength });
-
     });
 
     it('when add is called the hero array length should be incremented once', () => {
