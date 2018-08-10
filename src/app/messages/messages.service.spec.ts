@@ -19,7 +19,7 @@ describe('MessageService', () => {
 
     });
 
-    describe('add method', () => {
+    describe('add', () => {
 
         let message: string;
 
