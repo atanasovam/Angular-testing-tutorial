@@ -42,12 +42,3 @@ export class HeroesComponent implements OnInit {
   }
 
 }
-
-// describe("delete")
-
-// Test Cases for Delete
-// 0. shouldn`t modify the heroes list, when the provided hero doesn`t exist
-// 1. should remove the provided hero from the heroes list
-// 2. heroService.deleteHero should be called once
-// 3. heroService.deleteHero should be called with the provided hero object.
-// 4. heroService.deleteHero.subscribe should be called once

@@ -2,18 +2,18 @@ import { of } from 'rxjs/observable/of';
 
 import { HeroesComponent } from '../heroes.component';
 import { Hero } from '../../hero';
+import { tick, fakeAsync } from '../../../../node_modules/@angular/core/testing';
 
 describe('HeroesComponent', () => {
 
   let sut: HeroesComponent;
   let heroServiceMock: any;
-  let heroes: Array<Hero>;
-  let heroServiceMethodsToSpyOn: Array<string>;
+  let data: Array<Hero>;
 
   beforeEach(() => {
 
-    heroes = [
-      { id: 0, name: 'hero0', strength: 8 },
+    data = [
+      { id: 0, name: 'hero0', strength: 11 },
       { id: 1, name: 'hero1', strength: 18 },
       { id: 2, name: 'hero2', strength: 80 },
     ];
@@ -24,33 +24,89 @@ describe('HeroesComponent', () => {
 
   });
 
-  // REVIEW: Where are the delete tests defined at the bottom of the file?
   describe('delete', () => {
 
-    beforeEach(() => {
-      heroServiceMock.deleteHero.and.returnValue(of(true))
-    });
-
     it('should delete 1 hero from the heroes list', () => {
+      heroServiceMock.deleteHero.and.returnValue(of(true));
+      sut.heroes = data;
 
-      sut.heroes = heroes;
-
-      sut.delete(heroes[0]);
+      sut.delete(data[0]);
 
       const actualHeroesListLength: number = sut.heroes.length;
       const expectedHeroesListLength: number = 2;
 
       expect(expectedHeroesListLength).toEqual(actualHeroesListLength);
-
     });
+
+    it('shouldn`t modify the heroes list, when the provided hero doesn`t exist', () => {
+      const nonExistingHero: Hero = { id: 100, name: 'name', strength: 0 };
+
+      heroServiceMock.deleteHero.and.returnValue(of(true));
+      sut.heroes = data;
+
+      sut.delete(nonExistingHero);
+
+      const actualHeroesListLength: number = sut.heroes.length;
+      const expectedHeroesListLength: number = 3;
+
+      expect(expectedHeroesListLength).toEqual(actualHeroesListLength);
+    });
+
+    it('should remove the provided hero from the heroes list', () => {
+      const heroToDelete: Hero = data[0];
+
+      heroServiceMock.deleteHero.and.returnValue(of(true));
+      sut.heroes = data;
+
+      sut.delete(heroToDelete);
+
+      const actualResult = sut.heroes.filter((hero: Hero) => hero.id === heroToDelete.id);
+      const expectedResult = [];
+
+      expect([...actualResult]).toEqual([...expectedResult]);
+    });
+
+    it('heroService.deleteHero should be called once', () => {
+      const hero: Hero = data[0];
+
+      heroServiceMock.deleteHero.and.returnValue(of(true));
+      sut.heroes = data;
+
+      sut.delete(hero);
+
+      expect(heroServiceMock.deleteHero).toHaveBeenCalledTimes(1);
+    });
+
+    it('heroService.deleteHero should be called with the provided hero object', () => {
+      const heroToDelete: Hero = data[0];
+
+      heroServiceMock.deleteHero.and.returnValue(of(true));
+      sut.heroes = data;
+
+      sut.delete(heroToDelete);
+
+      expect(heroServiceMock.deleteHero).toHaveBeenCalledWith(heroToDelete)
+    });
+
+    it('heroService.deleteHero.subscribe should be called once', fakeAsync(() => {
+      const subscribeSpy = jasmine.createSpyObj(['subscribe']);
+      console.log(subscribeSpy);
+
+      const heroToDelete: Hero = data[0];
+
+      heroServiceMock.deleteHero.and.returnValue(subscribeSpy);
+      sut.heroes = data;
+
+      sut.delete(heroToDelete);
+      tick();
+      expect(subscribeSpy.subscribe).toHaveBeenCalledTimes(1);
+    }));
 
   });
 
   describe('ngOnInit', () => {
 
-    beforeEach(() => {
-      heroServiceMock.getHeroes.and.returnValue(of(heroes))
-    });
+    beforeEach(() => heroServiceMock.getHeroes.and.returnValue(of(data)));
 
     it('when ngOnInit is called getHeroes should be called once', () => {
       spyOn(sut, 'getHeroes');
@@ -70,12 +126,9 @@ describe('HeroesComponent', () => {
 
   });
 
-
   describe('getHeroes', () => {
 
-    beforeEach(() => {
-      heroServiceMock.getHeroes.and.returnValue(of(heroes))
-    });
+    beforeEach(() => heroServiceMock.getHeroes.and.returnValue(of(data)));
 
     it('when getHeroes is called heroService.getHeroes should be called once', () => {
       const heroService = (sut as any).heroService;
@@ -83,90 +136,79 @@ describe('HeroesComponent', () => {
       sut.getHeroes();
 
       expect(heroService.getHeroes).toHaveBeenCalledTimes(1);
-
     });
 
     it('when getHeroes is called heroes shouldn`t be undefined', () => {
       sut.getHeroes();
 
-      expect(sut.heroes).not.toBeUndefined;
+      expect(sut.heroes).toBeDefined();
     });
 
   });
 
   describe('add', () => {
+    let hero: Hero;
 
-    // REVIEW: when add is called....??? what should happen?
-    // REVIEW: missed case that the actual hero was added to the collection
-    it('when add is called with empty string', () => {
+    beforeEach(() => hero = data[0]);
 
+    it('when add is called with empty string, shouldn`t add new hero', () => {
       const heroName: string = '';
-
-      heroServiceMock.addHero.and.returnValue(of(heroName))
+      heroServiceMock.addHero.and.returnValue(of(heroName));
 
       sut.add(heroName);
-      expect(heroServiceMock.addHero).not.toHaveBeenCalled();
 
+      expect(heroServiceMock.addHero).not.toHaveBeenCalled();
+    });
+
+    it('when add is called with non empty string, should add new hero', () => {
+      const heroName: string = hero.name;
+      const expectedParameters = { name: hero.name, strength: hero.strength };
+
+      heroServiceMock.addHero.and.returnValue(of(heroName));
+      sut.heroes = [];
+
+      sut.add(heroName);
+
+      expect(heroServiceMock.addHero).toHaveBeenCalledWith(expectedParameters);
     });
 
     it('when add is called with valid parameter heroService.addHero should be called once', () => {
+      const hero: Hero = data[0];
 
-      const hero: Hero = heroes[0];
-      sut.heroes = heroes;
-
+      sut.heroes = data;
       heroServiceMock.addHero.and.returnValue(of(hero));
+
       sut.add(hero.name);
 
       expect(heroServiceMock.addHero).toHaveBeenCalledTimes(1);
-
     });
 
-    // REVIEW: What happened here?
-    xit('when add is called with valid parameter heroService.addHero should be called once', () => {
+    it('when add is called with hero object heroService.addHero should be called with the same parameters', () => {
+      const hero: Hero = data[0];
+      const expectedResult = { name: hero.name, strength: hero.strength };
 
-      const hero: Hero = heroes[0];
-      sut.heroes = heroes;
+      sut.heroes = data;
+      heroServiceMock.addHero.and.returnValue(of(expectedResult));
 
-      heroServiceMock.addHero.and.returnValue(of({ name: hero.name, strength: hero.strength }));
+      sut.add(expectedResult.name);
 
-      sut.add(hero.name);
-
-      // REVIEW: why access this like that?
-      expect((sut as any).heroService.addHero).toHaveBeenCalledWith({ name: hero.name, strength: hero.strength });
+      expect(heroServiceMock.addHero).toHaveBeenCalledWith(expectedResult);
     });
 
     it('when add is called the hero array length should be incremented once', () => {
-      sut.heroes = heroes;
+      const hero: Hero = data[0];
 
-      const hero: Hero = heroes[0];
-      sut.heroes = heroes;
-
+      sut.heroes = data;
       heroServiceMock.addHero.and.returnValue(of(hero));
 
-      const expectedHeroListlength: number = sut.heroes.length + 1;
+      const expectedHeroListLength: number = sut.heroes.length + 1;
 
       sut.add(hero.name);
-      const actualHeroListlength: number = sut.heroes.length;
+      const actualHeroListLength: number = sut.heroes.length;
 
-      expect(expectedHeroListlength).toEqual(actualHeroListlength);
-
+      expect(expectedHeroListLength).toEqual(actualHeroListLength);
     });
 
   });
 
 });
-
-// Test Cases for Delete
-// 0. shouldn`t modify the heroes list, when the provided hero doesn`t exist
-// 1. should remove the provided hero from the heroes list
-// 2. heroService.deleteHero should be called once
-// 3. heroService.deleteHero should be called with the provided hero object.
-// 4. heroService.deleteHero.subscribe should be called once
-
-// { provide: HeroService, useValue: mockHeroService }
-// what are the other 2 options and when do I want to use them
-// research the fucking fixture
-// research debugElement
-
-// research zone.js
-// research QueryList
