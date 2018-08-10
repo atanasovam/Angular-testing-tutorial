@@ -665,30 +665,38 @@ describe('HeroService', () => {
       expect(_sut.handleError).toHaveBeenCalledTimes(1);
     });
 
-    it('after getHeroes have been called, sut.handleError should be called with message that contains `HeroService: ` + logMessage ', () => {
+    fit('after getHeroes have been called, sut.handleError should be called with message that contains `HeroService: ` + logMessage ', () => {
       const expectedParams: Array<any> = ['getHeroes', []];
 
-      spyOn(_sut, 'handleError');
+      spyOn(_sut, 'handleError').and.callThrough();
 
       sut.getHeroes().subscribe();
       const req: TestRequest = httpTestingController.expectOne(baseURL);
-      req.flush(new Error('oops'));
+      // req.flush({},{
+      //   status: 400,
+      //   statusText:'dsddddssd',
+      // });
+
+      req.flush({});
 
       expect(_sut.handleError).toHaveBeenCalledWith(...expectedParams);
     });
 
-    fit('after getHeroes have been called, sut.handleError should be called with message that contains `HeroService: ` + logMessage ', () => {
+    it('after getHeroes have been called, sut.handleError should be called with message that contains `HeroService: ` + logMessage ', () => {
       const expectedParams: string = 'getHeroes failed: oops';
 
       spyOn(_sut, 'log');
       spyOn(_sut, 'handleError').and.callThrough();
       sut.getHeroes().subscribe();
       const req: TestRequest = httpTestingController.expectOne(baseURL);
-      req.flush(new Error('oops'));
+      req.flush(new Error('oops'),{
+        status: 400,
+        statusText:'dsdddssd',
+      });
       // expect(_sut.handleError).toHaveBeenCalledTimes(1);
       // expect(_sut.log).toHaveBeenCalledTimes(1);
       // expect(_sut.log).toHaveBeenCalledWith()
-      // expect(messageServiceMock.add).toHaveBeenCalledWith(expectedParams);
+      expect(messageServiceMock.add).toHaveBeenCalledWith(expectedParams);
     });
 
   });
