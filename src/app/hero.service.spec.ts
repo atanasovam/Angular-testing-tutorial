@@ -103,20 +103,28 @@ describe('HeroService', () => {
     describe('when there isn`t a successful response', () => {
 
       it('should call handleError once', () => {
-        const handleErrorSpy = spyOn((sut as any), 'handleError');
+        const handleErrorSpy = spyOn((sut as any), 'handleError').and.callThrough();
 
         sut.getHeroes().subscribe();
-        req = httpTestingController.expectOne(baseURL);
+        const req: TestRequest = httpTestingController.expectOne(baseURL);
+        req.flush({}, {
+          status: 400,
+          statusText: 'oops',
+        });
 
         expect(handleErrorSpy).toHaveBeenCalledTimes(1);
 
       });
 
       it('should call handleError with correct parameters', () => {
-        const handleErrorSpy = spyOn((sut as any), 'handleError');
+        const handleErrorSpy = spyOn((sut as any), 'handleError').and.callThrough();
 
         sut.getHeroes().subscribe();
         req = httpTestingController.expectOne(baseURL);
+        req.flush({}, {
+          status: 400,
+          statusText: 'oops',
+        });
 
         expect(handleErrorSpy).toHaveBeenCalledWith('getHeroes', []);
 
@@ -646,69 +654,92 @@ describe('HeroService', () => {
     beforeEach(() => _sut = (sut as any));
 
     it('after getHeroes have been called, sut.handleError should be called once', () => {
-      spyOn(_sut, 'handleError');
+      spyOn(_sut, 'handleError').and.callThrough();
 
       sut.getHeroes().subscribe();
       const req: TestRequest = httpTestingController.expectOne(baseURL);
-      req.flush(new Error('oops'));
+      req.flush({}, {
+        status: 400,
+        statusText: 'oops',
+      });
 
       expect(_sut.handleError).toHaveBeenCalledTimes(1);
     });
 
     it('after getHeroes have been called, sut.handleError should be called once', () => {
-      spyOn(_sut, 'handleError');
+      spyOn(_sut, 'handleError').and.callThrough();
 
       sut.getHeroes().subscribe();
       const req: TestRequest = httpTestingController.expectOne(baseURL);
-      req.flush(new Error('oops'));
+      req.flush({}, {
+        status: 400,
+        statusText: 'oops',
+      });
 
       expect(_sut.handleError).toHaveBeenCalledTimes(1);
     });
 
-    fit('after getHeroes have been called, sut.handleError should be called with message that contains `HeroService: ` + logMessage ', () => {
+    it('after getHeroes have been called, sut.handleError should be called with message that contains `getHeroes` and an empty array ', () => {
       const expectedParams: Array<any> = ['getHeroes', []];
-
       spyOn(_sut, 'handleError').and.callThrough();
 
       sut.getHeroes().subscribe();
       const req: TestRequest = httpTestingController.expectOne(baseURL);
-      // req.flush({},{
-      //   status: 400,
-      //   statusText:'dsddddssd',
-      // });
-
-      req.flush({});
+      req.flush({}, {
+        status: 400,
+        statusText: 'oops',
+      });
 
       expect(_sut.handleError).toHaveBeenCalledWith(...expectedParams);
     });
 
-    it('after getHeroes have been called, sut.handleError should be called with message that contains `HeroService: ` + logMessage ', () => {
-      const expectedParams: string = 'getHeroes failed: oops';
+    it('after getHeroes have been called, messageService.add should be called with message that contains `HeroService: ` + logMessage ', () => {
+      const expectedParams: string = 'HeroService: getHeroes failed: Http failure response for api/heroes: 400 oops';
 
-      spyOn(_sut, 'log');
-      spyOn(_sut, 'handleError').and.callThrough();
       sut.getHeroes().subscribe();
       const req: TestRequest = httpTestingController.expectOne(baseURL);
-      req.flush(new Error('oops'),{
+      req.flush({}, {
         status: 400,
-        statusText:'dsdddssd',
+        statusText: 'oops',
       });
-      // expect(_sut.handleError).toHaveBeenCalledTimes(1);
-      // expect(_sut.log).toHaveBeenCalledTimes(1);
-      // expect(_sut.log).toHaveBeenCalledWith()
+
       expect(messageServiceMock.add).toHaveBeenCalledWith(expectedParams);
     });
 
+    it('after getHeroNo404 have been called, sut.handleError should return function witch returns Observable', () => {
+      const handleErrorReturnedValue = _sut.handleError('getHero id=${id}', {});
+
+      const result = handleErrorReturnedValue(new Error('oops'));
+      const isResultObservable = isObservable(result);
+
+      expect(isResultObservable).toBeTruthy();
+    });
+
+    it('after handleError have been called, the result of it`s result function should be the same as the second input parameter', () => {
+      const expectedResult = { id: 1 };
+      const handleErrorReturnedValue = _sut.handleError(`getHero id=${expectedResult.id}`, expectedResult);
+
+      const result = handleErrorReturnedValue(new Error('oops'));
+
+      expect(result.value).toEqual(expectedResult);
+    });
+
+    it('after handleError have been called without second parameter, the result of it`s result function should be Observable of undefined', () => {
+      const handleErrorReturnedValue = _sut.handleError('getHero id=1', undefined);
+
+      const result = handleErrorReturnedValue(new Error('oops'));
+
+      expect(result.value).toBeUndefined();
+    });
   });
 
-
-  xdescribe('log', () => {
+  describe('log', () => {
     let _sut: any;
 
     beforeEach(() => _sut = (sut as any));
 
     it('after getHeroes have been called, sut.log should be called once', () => {
-      spyOn(_sut, 'log');
+      spyOn(_sut, 'log').and.callThrough();
 
       sut.getHeroes().subscribe();
       const req: TestRequest = httpTestingController.expectOne(baseURL);
@@ -737,11 +768,12 @@ describe('HeroService', () => {
       expect(_sut.messageService.add).toHaveBeenCalledWith(expectedMessage);
     });
 
+    it('sut.log should be of type void', () => {
+      const actualResult = _sut.log('log');
+
+      expect(actualResult).toBeUndefined();
+    });
+
   });
 
 });
-// describe handleError
-  // should return function
-    // should return observable
-    // should call messageService.add once
-    // should call messageService.add with 'HeroService: ' + logMessage
